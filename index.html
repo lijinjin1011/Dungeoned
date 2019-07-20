@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="./css/map.css">
+    <script src="./js/jquery-1.12.4.js"></script>
+    <script src="./js/data.js"></script>
+    <script src="./js/template-web.js"></script>
+
+
+</head>
+
+<body>
+    <h1>上下左右控制移动,摁一下动一步 (D) 存档 (F) 读取数据</h1>
+    <div class="prop_info">
+        <span class="floor_info">第1层</span>
+        <ul>
+            <li><span>生命：</span> <i></i> </li>
+            <li><span>攻击：</span> <i></i> </li>
+            <li><span>防御：</span> <i></i></li>
+            <li><span>金币：</span> <i></i></li>
+            <li> <i class="key1"></i> <span class="right">0把</span></li>
+            <li> <i class='key2'></i> <span class="right">0把</span></li>
+            <li> <i class="key3"></i> <span class="right">0把</span></li>
+        </ul>
+    </div>
+    <div id="map"></div>
+    <div class="hero_info">
+        <span class="floor_info">道具</span>
+        武器：<span class="weapon"></span><br>
+        护盾：<span class="shield"></span>
+        <span class="floor_info">宝物</span>
+        <ul>
+        </ul>
+    </div>
+    <div class="box">
+    </div>
+    <div class="store">
+        <p>勇士!我想你会需要我的帮助!!</p>
+        <p>花费<span class="gold"></span>金币,你可以可以选择</p>
+
+        <p><input type="button" value="" class="attack1"></p>
+        <p><input type="button" value="" class="defense1"></p>
+        <p><input type="button" value="" class="hp1"></p>
+        <p> <input type="button" value="退出商店" id ="quit">
+        </p>
+    </div>
+
+    <!-- 写一个模板 -->
+    <script type="text/html" id="tpl-info">
+        <p>{{ text }}</p>
+        <p><i></i> <span>怪物名称</span> <span>攻击</span> <span>防御</span> <span>金币</span> 损失生命</p>
+        {{ each }}
+           <p> <i style = " background : {{ $value.bg }}"></i>
+            <span>{{ $value.name }}</span>
+            <span>{{ $value.attack }}</span>
+            <span>{{ $value.defense }}</span>
+            <span>{{ $value.gold }}</span>
+            <span>{{ $value.loss }}</span>
+        </p>
+        {{ /each }}
+    </script>
+
+    <script>
+     
+
+        //声明一个变量保存当前楼层 默认为第一层
+        var storey = 1;
+        var msg = floor[1];
+        // 声明一个全局变量用来保存代表英雄的div小盒子对象
+        var heroObj;
+        // 声明一个用来替换的div 盒子对象
+        var rplObj;
+
+        // 加载地图信息
+        var str = '';
+        function getMap() {
+            msg = floor[storey];
+            for (var i = 0; i < msg.length; i++) {
+                str += '<div></div>';
+            }
+            $('#map').html(str);
+
+            var sumx = 1;
+            var sumy = 1;
+            for (var i = 0; i < msg.length; i++) {
+                $('#map>div').eq(i).css('background', msg[i].bg);
+                $('#map>div').eq(i).attr('x', sumx);
+                $('#map>div').eq(i).attr('y', sumy);
+                if (msg[i].id == player.id) {
+                    player.x = sumx;
+                    player.y = sumy;
+                    heroObj = $('#map>div').eq(i);
+                }
+                sumy++;
+                if (sumy == 12) {
+                    sumy = 1;
+                }
+                if ((i + 1) % 11 == 0) {
+                    sumx++;
+                }
+
+            }
+
+            $('.prop_info>span').text('第' + storey + '层');
+            $('.prop_info li').eq(0).children('i').text(player.hp);
+            $('.prop_info li').eq(1).children('i').text(player.attack);
+            $('.prop_info li').eq(2).children('i').text(player.defense);
+            $('.prop_info li').eq(3).children('i').text(player.gold);
+            $('.prop_info li').eq(4).children('span').text(player.key[0].yellow + ' 把');
+            $('.prop_info li').eq(5).children('span').text(player.key[1].blue + ' 把');
+            $('.prop_info li').eq(6).children('span').text(player.key[2].red + ' 把');
+            $('.hero_info .weapon').text(player.weapon);
+            $('.hero_info .shield').text(player.shield);
+
+        }
+
+        getMap();
+
+        // 点击键盘移动鼠标
+        $(document).on('keydown', function (e) {
+            var hreo = getJQObj(player.x, player.y);
+
+            switch (e.keyCode) {
+
+                case 37: {
+                    if (player.direction != 37) {
+                        player.direction = 37;
+                        hreo.css('background', "url('./img/1.png') no-repeat 0 -32px");
+                        player.bg = "url('./img/1.png') no-repeat 0 -32px";
+                    } else {
+                        // 判断英雄往左移动的前面是否已经到界限,如果没有到边界,判断是什么对象,特殊对象中的空气,或者NPC,或者
+                        // 墙壁,暗道,怪物,或者道具,
+                        getObj(player.x, player.y - 1, player.direction);
+                    }
+                    break;
+                }
+                case 38: {
+                    if (player.direction != 38) {
+                        player.direction = 38;
+                        hreo.css('background', "url('./img/1.png') no-repeat 0 -96px");
+                        player.bg = "url('./img/1.png') no-repeat 0 -96px";
+                    } else {
+                        getObj(player.x - 1, player.y, player.direction);
+                    }
+                    break;
+                }
+                case 39: {
+                    if (player.direction != 39) {
+                        player.direction = 39;
+                        hreo.css('background', "url('./img/1.png') no-repeat 0 -64px");
+                        player.bg = "url('./img/1.png') no-repeat 0 -64px";
+                    } else {
+                        getObj(player.x, player.y + 1, player.direction);
+                    }
+                    break;
+                }
+                case 40: {
+                    if (player.direction != 40) {
+                        player.direction = 40;
+                        hreo.css('background', "url('./img/1.png') no-repeat");
+                        player.bg = "url('./img/1.png') no-repeat";
+                    } else {
+                        getObj(player.x + 1, player.y, player.direction);
+                    }
+                    break;
+                }
+                case 68: {
+                    var fl = JSON.stringify(floor);
+                    var ply = JSON.stringify(player);
+                    window.localStorage.setItem('cc_fl',fl);
+                    window.localStorage.setItem('cc_ply',ply);
+                    window.localStorage.setItem('cc_sty',storey);
+                    alert('存储成功~~~');
+                    break;
+                }
+                case 70: {
+                    var fl = window.localStorage.getItem('cc_fl');
+                    var ply = window.localStorage.getItem('cc_ply');
+                    var sty = window.localStorage.getItem('cc_sty');   
+        
+                    floor = JSON.parse(fl);            
+                    player = JSON.parse(ply);
+                    storey = parseInt(sty);
+                    alert('读取成功~~~');
+                    $('.hero_info>ul').empty();
+                    getMap();
+                    if(player.treasure.length > 0){
+                        for(var i = 0; i < player.treasure.length; i++){
+                            $('.hero_info>ul').append('<li class = '+player.treasure[i].name+'></li>');
+                            $('.hero_info>ul').children('li:last-child').css('background', player.treasure[i].bg);
+                        }
+                    }
+                    break;
+                }
+
+            }
+        });
+        // 根据传递过来的x,y值找到对象并返回对应的jQuery对象
+        function getJQObj(x, y) {
+            var index = (x - 1) * 11 + y - 1
+            return $('#map>div').eq(index);
+        }
+
+        // 根据传递过来的x,y值找到对象并进行处理
+        function getObj(x, y, direction) {
+            if (x < 1 || x > 11 || y > 11 || y < 1) {
+                return;
+            }
+            rplObj = getJQObj(x, y);
+
+            var coordx = parseInt(rplObj.attr('x'));
+            var coordy = parseInt(rplObj.attr('y'));
+            var obj_idx = (coordx - 1) * 11 + coordy - 1;
+
+            var diridx = obj_idx;
+            switch (direction) {
+                case 37: {
+                    diridx++;
+                    break;
+                }
+                case 38: {
+                    diridx += 11;
+                    break;
+                }
+                case 39: {
+                    diridx--;
+                    break;
+                }
+                case 40: {
+                    diridx -= 11;
+                    break;
+                }
+            }
+
+            var bool1 = special_types(obj_idx, diridx);
+            if (bool1) {
+                return;
+            }
+
+            var bool2 = prop_types(obj_idx, diridx);
+            if (bool2) {
+                return;
+            }
+            var bool3 = NPC(obj_idx, diridx);
+            if (bool3) {
+                return;
+            }
+
+            monster_types(obj_idx, diridx);
+        }
+
+        // 判断该对象是否存在于 特殊类中，如果存在处理完毕后 返回一个true,结束后续代码操作,如果不存在返回false,执行后续代码
+        function special_types(i, diridx) {
+
+            for (var j = 0; j < arr1.length; j++) {
+                
+                if (msg[i].id == arr1[j].id) {
+                    switch (msg[i].id) {
+                        case wall1.id: {
+                            heromove(i, diridx);
+                            return true;
+                        }
+                        case air.id: {
+                            heromove(i, diridx);
+                            return true;
+                        }
+                        case stair1.id: {
+                            storey++;
+                            getMap();
+                            if(storey > player.flr){
+                                console.log('上楼了');
+                                
+                                player.flr = storey;
+                                console.log(player.flr);
+                            }
+                            return true;
+                        }
+                        case stair2.id: {
+                            storey--;
+                            getMap();
+                            return true;
+                        }
+                        case door1.id: {
+                            if (player.key[0].yellow >= 1) {
+                                player.key[0].yellow--;
+                                heromove(i, diridx);
+                                return true;
+                            }
+                        }
+                        case door2.id: {
+                            if (player.key[1].blue >= 1) {
+                                player.key[1].blue--;
+                                heromove(i, diridx);
+                                return true;
+                            }
+                        }
+                        case door3.id: {
+                            if (player.key[2].red >= 1) {
+                                player.key[2].red--;
+                                heromove(i, diridx);
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        // 判断该对象是否存在于 道具类数组中,如果存在处理完毕后 返回一个true,结束后续代码操作,如果不存在返回false,执行后续代码
+        function prop_types(idx, preIdx) {
+            for (var i = 0; i < arr2.length; i++) {
+                if (msg[idx].id == arr2[i].id) {
+
+                    switch (msg[idx].id) {
+                        case d1.id: {
+                            player.treasure.push(d1);
+                            heromove(idx, preIdx);
+                            return true;
+                        }
+                        case d2.id: {
+                            player.hp += msg[idx].hp;
+                            heromove(idx, preIdx);
+                            return true;
+                        }
+                        case d3.id: {
+                            player.hp += msg[idx].hp;
+                            heromove(idx, preIdx);
+                            return true;
+                        }
+                        case d4.id: {
+                            player.attack += msg[idx].attack;
+                            heromove(idx, preIdx);
+                            return true;
+                        }
+                        case d5.id: {
+                            player.defense += msg[idx].defense;
+                            heromove(idx, preIdx);
+                            return true;
+                        }
+                        case d6.id: {
+                            player.key[0].yellow++;
+                            heromove(idx, preIdx);
+                            return true;
+                        }
+                        case d7.id: {  //飞行器
+                            player.treasure.push(d7);
+                            heromove(idx, preIdx);
+                            alert('楼层传送器获取成功,当你处于楼梯附近可以使用飞行器,传送至任意你到达过的楼层');
+                            $('.hero_info>ul').append('<li class = "csq"></li>');
+                            $('.hero_info>ul').children('li:last-child').css('background', d7.bg);
+                            return true;
+                        }
+                        case d8.id: {
+                            player.key[1].blue++;
+                            heromove(idx, preIdx);
+                            return true;
+                        }
+                        case d10.id: {
+                            player.treasure.push(d10);
+                            heromove(idx, preIdx);
+                            alert('记事本系统已开启，记事本将自动记录所有重要的谈话与提示。');
+                            $('.hero_info>ul').append('<li class = "jsb"></li>');
+                            $('.hero_info>ul').children('li:last-child').css('background', d10.bg);
+                            return true;
+                        }
+                        case tj.id: {
+                            player.weapon = '铁剑';
+                            player.attack += 10;
+                            heromove(idx, preIdx);
+                            return true;
+                        }
+                        case td.id: {
+                            player.shield = '铁盾';
+                            player.defense += 10
+                            heromove(idx, preIdx);
+                            return true;
+                        }
+                        case rkey.id: {
+                            player.key[2].red++;
+                            heromove(idx, preIdx);
+                            return true;
+                        }
+
+                    }
+                }
+            }
+            return false;
+        }
+
+        // 判断对象是否在 NPC对象中
+        function NPC(idx, preIdx) {
+            for (var i = 0; i < arr4.length; i++) {
+                if (msg[idx].id == arr4[i].id) {
+
+                    switch (msg[idx].id) {
+
+                        case wise_man.id: {
+                            if (storey == 3) {
+                                alert('送你一本怪物书，它能预测出当前楼层各类怪物对你的伤害。');
+                                msg.splice(43, 1, air);
+                                $('#map>div').eq(43).css('background', '');
+                                player.treasure.push(d9);
+                                $('.hero_info>ul').append('<li class = "gwsc"></li>');
+                                $('.hero_info>ul').children('.gwsc').css('background', d9.bg);
+                            } else if (storey == 4) {
+                                alert('有些门不能用钥匙打开，只有当你打败它的守卫后才会自动打开。');
+                                msg.splice(9, 1, air);
+                                $('#map>div').eq(9).css('background', '');
+                            } else if (storey == 6) {
+                                alert('魔塔一共50层，每10层为一个区域。如果不打败此区域的头目就不能到更高的地方。');
+                                msg.splice(80, 1, air);
+                                $('#map>div').eq(80).css('background', '');
+                            }
+                            return true;
+                        }
+                        case trader.id: {
+                            if (storey == 6) {
+                                if (confirm('我有1把蓝钥匙，你出50个金币就卖给你。')) {
+                                    if (player.gold >= 50) {
+                                        msg.splice(40, 1, air);
+                                        $('#map>div').eq(40).css('background', '');
+                                        player.gold -= 50;
+                                        player.key[1].blue++;
+                                        $('.prop_info li').eq(3).children('i').text(player.gold);
+                                        $('.prop_info li').eq(5).children('span').text(player.key[1].blue + ' 把');
+                                    }
+                                }
+                            } else if (storey == 7) {
+                                if (confirm('我有5把黄钥匙，你出50个金币就卖给你。')) {
+                                    if (player.gold >= 50) {
+                                        msg.splice(5, 1, air);
+                                        $('#map>div').eq(5).css('background', '');
+                                        player.gold -= 50;
+                                        player.key[0].yellow += 5;
+                                        $('.prop_info li').eq(3).children('i').text(player.gold);
+                                        $('.prop_info li').eq(4).children('span').text(player.key[0].yellow + ' 把');
+                                    }
+                                }
+                            }
+
+                            return true;
+                        }
+                        case thief.id: {
+
+                            return true;
+                        }
+                        case store.id : {
+                            if(storey == 4){
+                                var gold = 20;
+                                if(player.buyTimes != 0){
+                                    for(var i = 0; i < player.buyTimes; i++){
+                                        gold *= 2;
+                                    }
+                                } 
+                                $('.gold').text(gold);
+                                $('.attack1').val('攻击+2');
+                                $('.defense1').val('防御+4');
+                                $('.hp1').val('生命+200');
+                                $('.store').css('display', 'block');
+                            }
+                        }
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // 判断该对象是否存在于 怪物数组中
+        function monster_types(idx, preIdx) {
+            for (var i = 0; i < arr3.length; i++) {
+                if (msg[idx].id == arr3[i].id) {
+                    if (player.attack <= arr3[i].defense) {
+                        return;
+                    }
+
+                    if (arr3[i].attack <= player.defense || ((player.attack - arr3[i].defense) >= arr3[i].hp)) {
+                        player.gold += arr3[i].gold;
+                        heromove(idx, preIdx);
+                    } else {
+                        var time = Math.ceil(arr3[i].hp / (player.attack - arr3[i].defense));
+                        var lossHp = (arr3[i].attack - player.defense) * time;
+                        if (player.hp > lossHp) {
+                            player.hp -= lossHp;
+                            player.gold += arr3[i].gold;
+                            heromove(idx, preIdx);
+                        }
+                    }
+
+                    if (arr3[i].id == sw1.id && storey == 8) {
+                        if (!isExist(sw1.id)) {
+                            msg.splice(42, 1, air);
+                            $('#map>div').eq(42).css('background', '');
+                        }
+                    }
+                    break;
+                }
+            }
+
+        }
+        // 英雄移动
+        function heromove(idx, preIdx) {
+            var obj = rplObj;
+            rplObj = heroObj;
+            heroObj = obj;
+
+            heroObj.css('background', player.bg);
+            player.x = parseInt(heroObj.attr('x'));
+            player.y = parseInt(heroObj.attr('y'));
+            rplObj.css('background', '');
+
+            msg.splice(idx, 1, player);
+            msg.splice(preIdx, 1, air);
+
+            $('.prop_info li').eq(0).children('i').text(player.hp);
+            $('.prop_info li').eq(1).children('i').text(player.attack);
+            $('.prop_info li').eq(2).children('i').text(player.defense);
+            $('.prop_info li').eq(3).children('i').text(player.gold);
+            $('.prop_info li').eq(4).children('span').text(player.key[0].yellow + ' 把');
+            $('.prop_info li').eq(5).children('span').text(player.key[1].blue + ' 把');
+            $('.prop_info li').eq(6).children('span').text(player.key[2].red + ' 把');
+            $('.hero_info .weapon').text(player.weapon);
+            $('.hero_info .shield').text(player.shield);
+
+        };
+
+        // 根据 传递过来的对象,判断在当前楼层是否存在,如果存在,返回false
+        function isExist(obj) {
+            for (var i = 0; i < msg.length; i++) {
+                if (msg[i].id == obj)
+                    return true;
+            }
+            return false;
+        }
+
+        // 根据当前楼层,返回当前楼层所有的怪物对象数组
+        function getMonsterList() {
+            var list = [];
+            for (var i = 0; i < arr3.length; i++) {
+                for (var j = 0; j < msg.length; j++) {
+                    if (arr3[i].id == msg[j].id) {
+                        list.push(arr3[i]);
+                        break;
+                    }
+                }
+            }
+            return list;
+        };
+
+
+        // 遮罩层点击事件,当被点击时 隐藏
+        $('.box').on('click', function () {
+            $(this).css('display', 'none');
+        });
+
+        // 退出商店的点击事件
+        $('#quit').on('click', function () {
+            $('.store').css('display', 'none');
+        });
+
+        // 商店购买道具的点击事件
+        // 攻击 
+        $('.attack1').on('click',function(){
+            var sum = parseInt($('.gold').text());
+            if(storey == 4){
+                if(player.gold >= sum){
+                    player.gold -= sum;
+                    player.attack += 2;   
+                    player.buyTimes++;
+                }else{
+                    alert('金币不够哦,快去努力赚取金币吧');
+                }
+            }
+            $('.prop_info li').eq(1).children('i').text(player.attack);
+            $('.prop_info li').eq(3).children('i').text(player.gold);
+            $('#quit').trigger('click');
+        });
+        // 防御
+        $('.defense1').on('click',function(){
+            var sum = parseInt($('.gold').text());
+            if(storey == 4){
+                if(player.gold >= sum){
+                    player.gold -= sum;
+                    player.defense += 4;
+                    player.buyTimes++;
+                }else{
+                    alert('金币不够哦,快去努力赚取金币吧');
+                }
+            }
+            $('.prop_info li').eq(2).children('i').text(player.defense);
+            $('.prop_info li').eq(3).children('i').text(player.gold);
+            $('#quit').trigger('click');
+        });
+        // 生命值
+        $('.hp1').on('click',function(){
+            var sum = parseInt($('.gold').text());
+            if(storey == 4){
+                if(player.gold >= sum){
+                    player.gold -= sum;
+                    player.hp += 200;
+                    player.buyTimes++;
+                }else{
+                    alert('金币不够哦,快去努力赚取金币吧');
+                }
+            }
+            $('.prop_info li').eq(0).children('i').text(player.hp);
+            $('.prop_info li').eq(3).children('i').text(player.gold);
+            $('#quit').trigger('click');
+        });
+
+        // 给怪物宝典设置点击事件
+        $('.hero_info').on('click', '.gwsc', function () {
+            var list = getMonsterList();
+            console.log(list.length);
+
+            if (list.length > 0) {
+                list.text = '本楼层怪物信息';
+                for (var i = 0; i < list.length; i++) {
+                    if (player.attack > list[i].defense) {
+
+                        if (list[i].attack <= player.defense || (player.attack - list[i].defense) >= list[i].hp) {
+                            list[i].loss = 0;
+                        } else {
+                            var time = Math.ceil(list[i].hp / (player.attack - list[i].defense));
+                            var lossHp = (list[i].attack - player.defense) * time;
+                            if (player.hp > lossHp) {
+                                list[i].loss = lossHp;
+                            } else {
+                                list[i].loss = '???';
+                            }
+                        }
+                    } else {
+                        list[i].loss = '???';
+                    }
+                }
+
+                var resHtml = template('tpl-info', list);
+                $('.box').html(resHtml);
+            } else {
+                $('.box').html('当前楼层没有怪物踪迹!');
+            }
+
+            $('.box').css('display', 'block');
+        });
+
+        // 给飞行器设置点击事件
+        $('.hero_info').on('click', '.csq', function(){
+            var x = player.x;
+            var y = player.y;
+            var arr = [];
+            if( x+1 <= 11){
+               var index = x * 11 + y - 1;
+               arr.push(msg[index]);
+            }
+            if( x-1 >=1){
+                var index = (x-2) * 11 + y - 1;
+                arr.push(msg[index]);
+            }
+            if( y+1 >= 11){
+                var index = (x-1) * 11 + y;
+                arr.push(msg[index]);
+            }
+            if( y-1 <=1 ){
+                var index = (x-1) * 11 + y-2;
+                arr.push(msg[index]);
+            }
+            console.log(player.flr);
+            
+            for(var i = 0; i < arr.length; i++){
+                if(arr[i].id == stair1.id || arr[i].id == stair2.id){
+                    var floors = parseInt(prompt('请输入你要移动到的楼层'));
+                    if(floors > 0 && floors <= player.flr){
+                        storey = floors;
+                        getMap();
+                    }else {
+                        alert('无法传送至还未到底过的楼层哦');
+                    }
+                    return;
+                }
+            }
+        });
+
+    </script>
+</body>
+
+</html>

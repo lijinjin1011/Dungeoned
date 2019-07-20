@@ -1,0 +1,129 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+li {
+    list-style: none;
+}
+
+.store,
+.box,
+#map {
+    position: fixed;
+    width: 352px;
+    height: 352px;
+    border: 10px solid #ac5e3c;
+    top: 100px;
+    left: 110px;
+    background-image: url('../img/13.png');
+}
+
+.store,
+.box {
+    display: none;
+    background-image: none;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 10;
+    color: #fff;
+    text-align: center;
+    font-size: 12px;
+    line-height: 32px;
+}
+
+.store{
+    font-size: 16px;
+}
+
+.store input {
+    display: block;
+    width: 300px;
+    height: 40px;
+    margin: 0 auto;
+    margin-top: 20px;
+}
+
+.box p{
+    display: block;
+    margin-bottom: 5px;
+}
+.box p i {
+    float: left;
+    height: 32px;
+    width: 32px ;
+}
+
+.box p span {
+    float: left;
+    height: 32px;
+    width: 64px ;
+}
+
+
+#map>div {
+    float: left;
+    width: 32px;
+    height: 32px;
+}
+.hero_info,
+.prop_info {
+    position: fixed;
+    width: 120px;
+    height: 352px;
+    border: 10px solid #ac5e3c;
+    border-right: 0;
+    background-color: slategray;
+    top: 100px;
+    left: 0;
+}
+
+.hero_info {
+    left: 482px;
+    border: 10px solid #ac5e3c;
+    border-left: 0;
+}
+
+.prop_info li {
+    height: 32px;
+}
+
+.hero_info>ul>li {
+    float: left;
+    width: 32px;
+    height: 32px;
+}
+
+.prop_info li .key1 {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    margin-bottom: 10px;
+    background: url('../img/2.png') no-repeat 0 -128px;
+}
+.prop_info li .key2 {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    margin-bottom: 10px;
+    background: url('../img/2.png') no-repeat -32px -128px;
+}
+.prop_info li .key3 {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    margin-bottom: 10px;
+    background: url('../img/2.png') no-repeat -64px -128px;
+}
+
+.prop_info li .right {
+    float: right;
+    margin-top: 5px;
+    margin-right: 30px;
+}
+
+.floor_info {
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
